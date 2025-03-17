@@ -1,0 +1,138 @@
+
+{{!-- <div class="hero-image">
+    <a href="href="/products/giay-da-bong-jogarbola-racer-jg-2223""></a>
+        <img src="https://theme.hstatic.net/1000288768/1000753028/14/home_slider_image_4.jpg?v=4353" alt="Banner Image" class="img-fluid">
+    </a>
+</div> --}}
+
+
+<div class="container mt-4">
+    <h1 class="text-center">GIÀY THỂ THAO</h1>
+
+    <!-- Nút lọc danh mục -->
+    <div class="text-center mb-4">
+            {{!-- <a href="" class="btn btn-outline-success">
+                Tất Cả
+            </a> --}}
+        {{#each categories}}
+            <a href="?category={{this}}" class="btn btn-outline-success {{#if (eq this ../selectedCategory)}}active{{/if}}">
+                {{this}}
+            </a>
+        {{/each}}
+    </div>
+
+    
+    <div class="btn-group">
+        <button type="button" id="filterButton" class="btn btn-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+            lọc
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end">
+            <li><a href="?_sort=asc" id="asc_link" class="dropdown-item" type="button">giá tăng dần</a></li>
+            <li><a href="?_sort=desc" id="desc_link" class="dropdown-item" type="button">giá giảm dần</a></li>
+        </ul>
+    </div>
+
+    <!-- Product Grid -->
+    <div class="row product-grid">
+        {{#each products}}
+        <div class="col-sm-3 col-lg-3 product-item mb-4" data-category="{{this.category}}"> <!-- Thêm mb-4 -->
+            <div class="card card-product-item">
+                <a href="/{{this.slug}}">
+                    <img src="{{this.image}}" class="image-container" alt="{{this.name}}">
+                </a>
+                <div class="card-body">
+                    <a href="/{{this.slug}}">
+                        <h5 class="card-title">{{this.name}}</h5>
+                    </a>
+                    <p class="fs-1">{{formatPrince this.price}}</p>
+                </div>
+            </div>
+        </div>
+        {{/each}}
+    </div>
+
+    <div class="pagination-container text-center mt-4">
+        <ul class="pagination">
+            {{#if (gt currentPage 1)}}
+                <li class="page-item">
+                    <a class="page-link" href="?category={{selectedCategory}}&page={{subtract currentPage 1}}">❮</a>
+                </li>
+            {{/if}}
+
+            {{#each (range 1 totalPages)}}
+                <li class="page-item {{#if (eq this ../currentPage)}}active{{/if}}">
+                    <a class="page-link" href="?category={{../selectedCategory}}&page={{this}}">{{this}}</a>
+                </li>
+            {{/each}}
+
+            {{#if (lt currentPage totalPages)}}
+                <li class="page-item">
+                    <a class="page-link" href="?category={{selectedCategory}}&page={{sum currentPage 1}}">❯</a>
+                </li>
+            {{/if}}
+        </ul>
+
+    </div>
+
+</div>
+
+
+
+<script>
+    const params = new URLSearchParams(window.location.search);
+    const queryObject = Object.fromEntries(params.entries());
+    document.getElementById("asc_link").setAttribute("href", `?category=${queryObject.category}&_sort=asc`);
+    document.getElementById("desc_link").setAttribute("href", `?category=${queryObject.category}&_sort=desc`);
+    function getQueryParam(param) {
+        const urlParams = new URLSearchParams(window.location.search);
+        return urlParams.get(param);
+    }
+
+    // Cập nhật nội dung của nút dựa vào query string
+    function updateButtonText() {
+        const sortValue = getQueryParam('_sort');
+        const button = document.getElementById("filterButton");
+
+        if (sortValue === 'asc') {
+            button.textContent = "Giá tăng dần";
+        } else if (sortValue === 'desc') {
+            button.textContent = "Giá giảm dần";
+        } else {
+            button.textContent = "Lọc"; // Mặc định
+        }
+    }
+
+    // Gọi hàm khi tải trang
+    updateButtonText();
+    document.querySelectorAll('.filter-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const category = this.getAttribute('data-category');
+            const isActive = this.classList.contains('active'); 
+            
+            if (isActive) {
+                this.classList.remove('active');
+                document.querySelectorAll('.product-item').forEach(item => {
+                    item.style.display = 'block';
+                });
+            } else {
+                document.querySelectorAll('.filter-btn.active').forEach(activeButton => {
+                    activeButton.classList.remove('active'); 
+                });
+                this.classList.add('active'); 
+                
+                document.querySelectorAll('.product-item').forEach(item => {
+                    if (item.getAttribute('data-category') === category) {
+                        item.style.display = 'block';
+                    } else {
+                        item.style.display = 'none';
+                        
+                    }
+                });
+            }
+        });
+    });
+
+</script>
+
+
+

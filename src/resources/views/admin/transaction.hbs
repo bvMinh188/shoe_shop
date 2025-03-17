@@ -1,0 +1,174 @@
+
+<div class="col-md-12">
+    <h3>Thông tin đơn hàng</h3>
+    <table class="table mt-4">
+        <thead>
+            <tr>
+                <th scope="col">STT</th>
+                <th scope="col">Tên khách hàng</th>
+                <th scope="col">Địa chỉ</th>
+                <th scope="col">Số điện thoại</th>
+                <th scope="col">Giá</th>
+                <th scope="col">Thời gian</th>
+                <th scope="col">Trạng thái</th>
+                <th scope="col">Thao tác</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{#each order}}
+                <tr>
+                    <td class="name">{{sum @index 1}}</td>
+                    <td>{{this.userId.username}}</td>
+                    <td>{{this.address}}</td>
+                    <td>{{this.userId.phone}}</td>
+                    <td>{{this.price}}</td>
+                    <td>{{formatDate this.createdAt}}</td>
+                    <td>{{this.status}}</td>
+                    <td>
+                        <a href="#" class="btn btn-primary btn-view-order" data-toggle="modal" 
+                            data-products='{{{json this.products}}}' data-target="#detail-order-modal">
+                            Xem
+                        </a>
+
+
+                        {{#if (eq this.status "chờ xác nhận")}}
+                            <a href="" class="btn btn-success btn-confirm" data-id="{{this._id}}">Xác nhận</a>
+                            <a href="#" class="btn btn-danger" data-toggle="modal" data-id="{{this._id}}" data-target="#delete-order-modal">Hủy</a>
+                        {{/if}}
+                        {{#if (eq this.status "đang giao")}}
+                            <a href="" class="btn btn-success btn-complete"data-id="{{this._id}}">Giao thành công</a>
+                        {{/if}}
+                    </td>
+                </tr>
+            {{/each}}
+        </tbody>
+    </table>
+</div>
+
+<!-- Modal Xem Đơn Hàng -->
+<div id="detail-order-modal" class="modal fade" tabindex="-1" role="dialog">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Chi tiết đơn hàng</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div id="order-products" class="row"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Đóng</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+
+
+{{!-- Modal Xác Nhận Xóa --}}
+<div id="delete-order-modal" class="modal fade" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Hủy đơn hàng </h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p>Bạn có chắc chắn muốn hủy đơn hàng này không?</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Hủy</button>
+        <button id="btn-delete-order" type="button" class="btn btn-danger">có</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{{!-- Form Ẩn --}}
+<form name="delete-order-form" method="POST" style="display: none;">
+    <input type="hidden" name="_method" value="DELETE">
+</form>
+{{!-- Form xác nhận --}}
+<form name="confirm-order-form" method="POST"></form>
+{{!-- Form giao thành công --}}
+<form name="complete-order-form" method="POST"></form>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const orderProductsContainer = document.getElementById('order-products');
+
+    // Khi modal "Xem Đơn Hàng" được kích hoạt
+    $('#detail-order-modal').on('show.bs.modal', function (event) {
+        const button = $(event.relatedTarget);
+        let productsData = button.attr('data-products');
+        // Parse JSON
+        let products;
+        try {
+            products = JSON.parse(productsData);
+        } catch (error) {
+            console.error('Lỗi khi parse JSON:', error);
+            return;
+        }
+        // Xóa nội dung cũ
+        orderProductsContainer.innerHTML = '';
+
+        // Hiển thị chi tiết sản phẩm
+        products.forEach(product => {
+            const productHtml = `
+                <div class="col-md-4 mb-3">
+                    <div class="card">
+                        <img src="${product.image}" class="card-img-top" alt="${product.name}" style="height: 150px; object-fit: cover;">
+                        <div class="card-body">
+                            <h5 class="card-title">${product.name}</h5>
+                            <p class="card-text">Size: ${product.size}</p>
+                            <p class="card-text">Số lượng: ${product.quantity}</p>
+                        </div>
+                    </div>
+                </div>`;
+            orderProductsContainer.insertAdjacentHTML('beforeend', productHtml);
+        });
+    });
+
+    var orderId;
+    var deleteForm = document.forms['delete-order-form'];
+    var btnDeleteOrder = document.getElementById('btn-delete-order');
+    // Khi modal "Xóa Đơn Hàng" được kích hoạt
+    $('#delete-order-modal').on('show.bs.modal', function(event) {
+        var button = $(event.relatedTarget);  // Lấy button đã kích hoạt modal
+        orderId = button.data('id');  // Lấy ID của đơn hàng
+    });
+    // Khi nhấn nút "Xóa" trong modal
+    btnDeleteOrder.onclick = function() {
+        deleteForm.action = '/admin/transaction/' + orderId + '?_method=DELETE';  // Đặt URL action của form
+        deleteForm.submit();  // Gửi form
+    };
+
+    //xác nhận
+    var confirmBtn =$('.btn-confirm');
+    var confirmForm = document.forms['confirm-order-form']
+    confirmBtn.click(function (event){
+        event.preventDefault();
+        var orderId = $(this).data('id');
+        confirmForm.action = '/admin/transaction/' + orderId +'/confirm?_method=PATCH';
+        confirmForm.submit();
+    });
+
+    //giao thành công
+    var completeBtn = $('.btn-complete');
+    var completeForm = document.forms['complete-order-form']
+    completeBtn.click(function(event){
+        event.preventDefault();
+        var orderId =$(this).data('id');
+        console.log(orderId)
+        completeForm.action = '/admin/transaction/' + orderId +'/complete?_method=PATCH';
+        completeForm.submit();
+    });
+});
+
+</script>

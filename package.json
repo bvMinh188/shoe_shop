@@ -1,0 +1,39 @@
+{
+  "$schema": "http://json.schemastore.org/package",
+  "name": "shoe_shop",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "nodemon --inspect src/index.js",
+    "watch": "sass --watch src/resources/scss/:src/public/css/",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "shoe",
+    "shop"
+  ],
+  "author": "minh",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "bcrypt": "^5.1.1",
+    "connect-flash": "^0.1.1",
+    "cookie-parser": "^1.4.7",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "express-handlebars": "^8.0.1",
+    "express-session": "^1.18.1",
+    "jsonwebtoken": "^9.0.2",
+    "method-override": "^3.0.0",
+    "mongoose": "^8.12.1",
+    "mongoose-delete": "^1.0.2",
+    "mongoose-slug-updater": "^3.3.0",
+    "morgan": "^1.10.0",
+    "node-mailjet": "^6.0.8",
+    "path": "^0.12.7"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.9",
+    "sass": "^1.85.1"
+  }
+}

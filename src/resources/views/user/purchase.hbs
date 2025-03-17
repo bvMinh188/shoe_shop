@@ -1,0 +1,95 @@
+
+<div class="container">
+    <div class="col-md-12">
+        <h4>Lịch sử mua hàng</h4>
+
+        {{#if orders.length}}
+            {{#each orders}}
+                <div class="order-item border rounded p-3 mb-4">
+                    <h5>🛒 Mã đơn hàng: <strong>{{this._id}}</strong></h5>
+                    <div><strong>Thời gian đặt hàng:</strong> {{formatDate this.createdAt}}</div>
+                    
+                    {{#each products}}
+                        <div class="d-flex border-bottom pb-3 pt-3">
+                            <img src="{{this.image}}" alt="product" class="img-thumbnail" width="80">
+                            <div class="ms-3">
+                                <div><strong>{{this.name}}</strong></div>
+                                <div>Size: {{this.size}}</div>
+                                <div>x{{this.quantity}}</div>
+                            </div>
+                        </div>
+                    {{/each}}
+
+                    <div class="mt-3">
+                        <strong>Địa chỉ:</strong> {{this.address}}
+                    </div>
+                    <div>
+                        <strong>Thành tiền:</strong> <span class="text-danger">{{formatPrince this.price}}</span>
+                    </div>
+                    <div>
+                        <strong>Trạng thái:</strong> <span class=" {{this.status}}">{{this.status}}</span>
+                    </div>
+
+                    {{#if (eq this.status "chờ xác nhận")}}
+                        <div class="mt-3">
+                            <button class="btn btn-danger cancel-order" data-id="{{this._id}}">Hủy đơn</button>
+                        </div>
+                    {{/if}}
+                </div>
+            {{/each}}
+        {{else}}
+            <div class="alert alert-warning">Bạn chưa có đơn hàng nào.</div>
+        {{/if}}
+    </div>
+</div>
+
+
+
+
+{{!-- Modal Xác Nhận Xóa --}}
+<div id="delete-order-modal" class="modal fade" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Hủy đơn hàng </h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p>Bạn có chắc chắn muốn hủy đơn hàng này không?</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Hủy</button>
+        <button id="btn-delete-order" type="button" class="btn btn-danger">có</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{{!-- Form Ẩn --}}
+<form name="delete-order-form" method="POST" style="display: none;">
+    <input type="hidden" name="_method" value="DELETE">
+</form>
+
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var orderId;
+        var deleteForm = document.forms['delete-order-form'];
+        var btnDeleteOrder = document.getElementById('btn-delete-order'); // Đúng tên biến
+
+        // Khi modal được kích hoạt
+        $('#delete-order-modal').on('show.bs.modal', function (event) {
+            var button = $(event.relatedTarget);  // Lấy button đã kích hoạt modal
+            orderId = button.data('id');  // Lấy ID của đơn hàng
+        });
+
+        // Khi nhấn nút "Xóa" trong modal
+        btnDeleteOrder.onclick = function() { // Sửa tên biến thành btnDeleteOrder
+            deleteForm.action = '/admin/transaction/' + orderId + '?_method=DELETE';  // Đặt URL action của form
+            deleteForm.submit();  // Gửi form
+        };
+    });
+</script>
+
