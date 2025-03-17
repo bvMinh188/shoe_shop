@@ -55,42 +55,41 @@ class SiteController {
          
     //[Get] /
     index(req, res, next) {
-        let page = parseInt(req.query.page) || 1; // Trang hiện tại
-        let limit = 12; // Số sản phẩm mỗi trang
-        let skip = (page - 1) * limit; // Số sản phẩm cần bỏ qua
+        let page = parseInt(req.query.page) || 1;
+        let limit = 12;
+        let skip = (page - 1) * limit;
     
-        let filter = {}; // Object để lọc dữ liệu
-    
-        // Nếu có query `category`, thêm điều kiện lọc
+        let filter = {};
         if (req.query.category) {
             filter.category = req.query.category;
         }
     
-        let productQuery = Product.find(filter); // Lọc theo danh mục nếu có
+        let productQuery = Product.find(filter);
     
-        // Kiểm tra có yêu cầu sắp xếp giá không
         if (req.query._sort) {
             productQuery = productQuery.sort({ price: req.query._sort });
         }
     
         Promise.all([
-            productQuery.skip(skip).limit(limit), // Lấy sản phẩm theo trang đã lọc
-            Product.countDocuments(filter), // Đếm tổng số sản phẩm sau khi lọc
-            Product.distinct("category") // Lấy danh sách danh mục duy nhất
+            productQuery.skip(skip).limit(limit),
+            Product.countDocuments(filter),
+            Product.distinct("category")
         ])
         .then(([products, totalProducts, categories]) => {
-            const totalPages = Math.ceil(totalProducts / limit); // Tổng số trang sau khi lọc
+            const totalPages = Math.ceil(totalProducts / limit);
     
             res.render('home', {
-                categories: categories, // Danh mục cho filter
-                products: mutipleMongooseToObject(products), // Sản phẩm sau khi lọc
+                categories: categories,
+                products: mutipleMongooseToObject(products),
                 currentPage: page,
                 totalPages: totalPages,
-                selectedCategory: req.query.category || null, // Giữ danh mục được chọn
+                selectedCategory: req.query.category || null,
+                _sort: req.query._sort || "",
             });
         })
         .catch(next);
     }
+    
     
     
 
