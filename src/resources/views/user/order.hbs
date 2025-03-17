@@ -161,30 +161,38 @@ $(document).ready(function(){
         event.preventDefault();
 
         var address = $("#address").val();
-
-        // Lấy giá trị tổng tiền từ `span` có id="price", loại bỏ các ký tự không phải số
         var price = $("#price").text();
 
         $.ajax({
             url: "/checkout",
             method: "POST",
-            data: {
-                address: address,
-                price: price
-            },
-            success: function(response){
-                if(response.message == 'success'){
-                    alert("đặt hàng thành công")
+            data: { address: address, price: price },
+            success: function(response) {
+                if (response.message == 'success') {
+                    alert("Đặt hàng thành công");
                     window.location.href = "/";
-                }else{
-                    alert(response.message);
+                } else {
+                    let errorMsg = "Lỗi đặt hàng:\n";
+                    if (response.errors) {
+                        response.errors.forEach(error => {
+                            errorMsg += `- ${error.name} (Size ${error.size}): ${error.error}\n`;
+                        });
+                    } else {
+                        errorMsg += response.message;
+                    }
+                    alert(errorMsg);
                 }
             },
-            error: function() {
-                alert("Đã xảy ra lỗi trong quá trình đặt hàng")
+            error: function(xhr) {
+                if (xhr.responseJSON && xhr.responseJSON.message) {
+                    alert(xhr.responseJSON.message);
+                } else {
+                    alert("Đã xảy ra lỗi trong quá trình đặt hàng");
+                }
             }
-        }) 
-    })
+        });
+    });
+
 
 })
 </script>

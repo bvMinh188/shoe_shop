@@ -119,12 +119,10 @@ class SiteController {
 
     //[Post] /order/:id
     addProductCart(req, res, next) {
-        const quantity = parseInt(req.body.quantity, 10); // Ép kiểu số lượng
-        const size = parseInt(req.body.size, 10); // Ép kiểu size
+        const quantity = parseInt(req.body.quantity, 10);
+        const size = parseInt(req.body.size, 10);
         const id = req.params.id;
         var token = req.cookies.token;
-    
-        console.log("Request Data:", { size, quantity, id });
     
         if (token) {
             try {
@@ -133,36 +131,22 @@ class SiteController {
                 Product.findOne({ _id: id })
                     .then(product => {
                         if (!product) {
-                            console.log("Sản phẩm không tồn tại!");
                             return res.status(404).json({ message: 'Sản phẩm không tồn tại' });
                         }
     
                         const sizeInfo = product.sizes.find(s => parseInt(s.size, 10) === size);
-    
                         if (!sizeInfo) {
                             return res.status(400).json({ message: 'Không tìm thấy size' });
                         }
-    
-                        if (sizeInfo.quantity < quantity) {
-                            return res.status(400).json({ message: 'Sản phẩm không đủ số lượng' });
-                        }
-    
-                        Cart.find({ userId: decodeToken._id })
-                            .then(cartItems => {
-                                const existingProduct = cartItems.find(item => item.name === product.name && item.size === size);
-    
+                        
+                        Cart.findOne({ userId: decodeToken._id, name: product.name, size: size })
+                            .then(existingProduct => {
                                 if (existingProduct) {
                                     return Cart.findOneAndUpdate(
-                                        { _id: existingProduct._id, size: size, userId: decodeToken._id },
+                                        { _id: existingProduct._id },
                                         { $inc: { quantity: quantity } },
                                         { new: true }
-                                    ).then(() => {
-                                        return Product.updateOne(
-                                            { _id: id, 'sizes.size': size },
-                                            { $inc: { 'sizes.$.quantity': -quantity } }
-                                        );
-                                    }).then(() => res.json({ message: 'Cập nhật giỏ hàng thành công' }))
-                                    .catch(next);
+                                    );
                                 } else {
                                     const newCart = new Cart({
                                         userId: decodeToken._id,
@@ -173,23 +157,14 @@ class SiteController {
                                         size: size,
                                         quantity: quantity
                                     });
-    
-                                    return newCart.save()
-                                        .then(() => {
-                                            return Product.updateOne(
-                                                { _id: id, 'sizes.size': size },
-                                                { $inc: { 'sizes.$.quantity': -quantity } }
-                                            );
-                                        })
-                                        .then(() => res.json({ message: 'Thêm thành công' }))
-                                        .catch(next);
+                                    return newCart.save();
                                 }
                             })
+                            .then(() => res.json({ message: 'Thêm thành công' }))
                             .catch(next);
                     })
                     .catch(next);
             } catch (err) {
-                console.log("JWT Error:", err.message);
                 res.redirect('/login');
             }
         } else {
@@ -237,82 +212,43 @@ class SiteController {
     updateOrder(req, res, next) {
         const token = req.cookies.token;
         const { quantity } = req.body;
-        const size = parseInt(req.body.size, 10);
         const id = req.params.id;
     
         if (token) {
             try {
                 const decodeToken = jwt.verify(token, SECRET_CODE);
-    
-                // Tìm `cartItem` để lấy thông tin sản phẩm
-                Cart.findOne({ _id: id})
-                    .then(cartItem => {
-                        const quantityDiff = quantity - cartItem.quantity
-    
-                        // Kiểm tra số lượng hiện có trong `Product`
-                        Product.findOne({ name: cartItem.name, 'sizes.size': size })
-                            .then(product => {
-                                const sizeInfo = product.sizes.find(s => s.size === size);
-                                if (!sizeInfo || sizeInfo.quantity < quantityDiff) {
-                                    return res.status(400).json({ message: 'Sản phẩm không đủ số lượng' });
-                                }
-                                // Cập nhật `Cart` và `Product`
-                                Cart.findOneAndUpdate(
-                                    { _id: id},
-                                    { $set: { quantity: quantity } },
-                                    { new: true }
-                                )
-                                .then(() => {
-                                    return Product.updateOne(
-                                        { _id: id, 'sizes.size': size },
-                                        { $inc: { 'sizes.$.quantity': -quantityDiff } }
-                                    );
-                                })
-                                .then(() => res.json({ message: 'Cập nhật giỏ hàng thành công' }))
-                                .catch(next);
-                            })
-                            .catch(err => {
-                                console.error("Lỗi khi kiểm tra số lượng sản phẩm:", err);
-                                res.status(500).json({ message: "Lỗi khi kiểm tra số lượng sản phẩm" });
-                            });
-                    })
-                    .catch(next);
+                Cart.findOneAndUpdate(
+                    { _id: id },
+                    { $set: { quantity: quantity } },
+                    { new: true }
+                )
+                .then(() => res.json({ message: 'Cập nhật giỏ hàng thành công' }))
+                .catch(next);
             } catch (err) {
                 res.redirect('/login');
             }
         } else {
             res.redirect('/login');
         }
-    } 
+    }
     
     
     
     //[DELETE] /delete-order/;id
     deleteOrder(req, res, next) {
         var token = req.cookies.token;
-        const { size } = req.body;
         const id = req.params.id;
     
         if (token) {
             try {
                 var decodeToken = jwt.verify(token, SECRET_CODE);
-    
-                Cart.findOneAndDelete(
-                    { _id: id}
-                )
-                    .then(cartItem => {  
-                        Product.updateOne(
-                            { name: cartItem.name, 'sizes.size': size },
-                            { $inc: { 'sizes.$.quantity': cartItem.quantity } }
-                        ).then(() => {
-                            res.json({ message: "Xóa thành công" });
-                        }).catch(err => {
-                            res.status(500).json({ message: "Lỗi khi cập nhật số lượng sản phẩm" });
-                        });
+                Cart.findOneAndDelete({ _id: id })
+                    .then(() => {
+                        res.json({ message: 'Xóa thành công' });
                     })
                     .catch(next);
             } catch (err) {
-                return res.status(403).json({ message: "Xác thực người dùng không thành công" });
+                return res.status(403).json({ message: 'Xác thực người dùng không thành công' });
             }
         } else {
             res.redirect('/login');
@@ -325,56 +261,85 @@ class SiteController {
         const { address, price } = req.body;
         const token = req.cookies?.token;
     
-        if (token) {
-            try {
-                const decodeToken = jwt.verify(token, SECRET_CODE);
-                Cart.find({ userId: decodeToken._id })
-                    .then(cartItems => {
-                        const products = cartItems.map(item => ({
-                            name: item.name,
-                            image: item.image,
-                            size: item.size,
-                            quantity: item.quantity
-                        }));
+        if (!token) return res.redirect('/');
     
-                        // Tạo một đơn hàng mới
-                        const newOrder = new Order({
-                            userId: decodeToken._id,
-                            products: products,
-                            address: address,
-                            price: price,
-                            status: 'chờ xác nhận',
-                        });
-
-                        newOrder.save()
-                            .then(order => {
-                                // Xóa giỏ hàng sau khi đặt hàng thành công
-                                Cart.deleteMany({ userId: decodeToken._id })
-                                    .then(() => {
-                                        res.json({ message: 'success', order });
-                                    })
-                                    .catch(err => {
-                                        console.error("Lỗi khi xóa giỏ hàng:", err);
-                                        res.status(500).json({ message: 'Đã xảy ra lỗi khi xóa giỏ hàng' });
-                                    });
-                            })
-                            .catch(err => {
-                                console.error("Lỗi khi lưu đơn hàng:", err);
-                                res.status(500).json({ message: 'Đã xảy ra lỗi khi lưu đơn hàng' });
-                            });
-                    })
-                    .catch(err => {
-                        console.error("Lỗi khi lấy giỏ hàng:", err);
-                        res.status(500).json({ message: 'Đã xảy ra lỗi khi lấy giỏ hàng' });
+        try {
+            const decodeToken = jwt.verify(token, SECRET_CODE);
+    
+            Cart.find({ userId: decodeToken._id }).then(cartItems => {
+                if (cartItems.length === 0) {
+                    return res.status(400).json({ message: 'Giỏ hàng trống' });
+                }
+    
+                const productChecks = cartItems.map(item => {
+                    return Product.findOne({ name: item.name, 'sizes.size': item.size }).then(product => {
+                        if (!product) {
+                            return { name: item.name, size: item.size, error: 'Sản phẩm không tồn tại' };
+                        }
+    
+                        const sizeInfo = product.sizes.find(s => s.size === item.size);
+                        if (!sizeInfo || sizeInfo.quantity < item.quantity) {
+                            return { name: item.name, size: item.size, error: `Chỉ còn ${sizeInfo ? sizeInfo.quantity : 0} sản phẩm` };
+                        }
+    
+                        return null; 
                     });
-            } catch (err) {
-                console.error("Lỗi xác thực token:", err);
-                res.redirect('/');
-            }
-        } else {
+                });
+    
+                Promise.all(productChecks).then(results => {
+                    const errors = results.filter(result => result !== null);
+                    if (errors.length > 0) {
+                        const errorMessage = errors.map(err => `${err.name} - Size: ${err.size}: ${err.error}`).join("\n");
+                        return res.status(400).json({ message: errorMessage });
+                    }
+                    const productUpdates = cartItems.map(item => {
+                        return Product.updateOne(
+                            { name: item.name, 'sizes.size': item.size },
+                            { $inc: { 'sizes.$.quantity': -item.quantity } }
+                        );
+                    });
+    
+                    Promise.all(productUpdates)
+                        .then(() => {
+                            const newOrder = new Order({
+                                userId: decodeToken._id,
+                                products: cartItems.map(item => ({
+                                    name: item.name,
+                                    image: item.image,
+                                    size: item.size,
+                                    quantity: item.quantity
+                                })),
+                                address: address,
+                                price: price,
+                                status: 'chờ xác nhận',
+                            });
+    
+                            return newOrder.save();
+                        })
+                        .then(order => {
+                            return Cart.deleteMany({ userId: decodeToken._id });
+                        })
+                        .then(() => {
+                            res.json({ message: 'success' });
+                        })
+                        .catch(err => {
+                            console.error("Lỗi khi xử lý đặt hàng:", err);
+                            res.status(500).json({ message: 'Lỗi khi xử lý đặt hàng' });
+                        });
+                }).catch(err => {
+                    console.error("Lỗi khi kiểm tra sản phẩm:", err);
+                    res.status(500).json({ message: 'Lỗi khi kiểm tra sản phẩm' });
+                });
+            }).catch(err => {
+                console.error("Lỗi khi lấy giỏ hàng:", err);
+                res.status(500).json({ message: 'Đã xảy ra lỗi khi lấy giỏ hàng' });
+            });
+        } catch (err) {
+            console.error("Lỗi xác thực token:", err);
             res.redirect('/');
         }
-    }
+    }    
+       
     
     purchase(req, res, next) {
         const token = req.cookies.token;

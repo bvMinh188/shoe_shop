@@ -17,42 +17,42 @@
                 </form> --}}
 
                 <!-- Nút Đăng nhập và Giỏ hàng -->
-                <ul class="navbar-nav ml-auto">
-                    <li class="nav-item dropdown">
+                <ul class="navbar-nav ml-auto d-flex align-items-center">
+                    <li class="nav-item">
                         {{#if user}}
-                            <!-- Nếu đã đăng nhập, hiển thị nút Đăng xuất -->
-                            <button class="btn btn-danger" id="logout-btn">Đăng xuất</button>
+                            <button class="btn custom-btn" id="logout-btn">Đăng xuất</button>
                         {{else}}
-                            <!-- Nếu chưa đăng nhập, hiển thị dropdown đăng nhập -->
-                            <a class="nav-link dropdown-toggle" href="#" id="loginDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                <img class="login-icon" src="https://e7.pngegg.com/pngimages/713/762/png-clipart-computer-icons-button-login-image-file-formats-logo-thumbnail.png" alt="Đăng nhập" width="25">
-                            </a>
-                            <div class="dropdown-menu dropdown-menu-end p-3" style="min-width: 250px;">
-                                <form id="login-form">
-                                    <div class="mb-2">
-                                        <label for="email" class="form-label">Email</label>
-                                        <input type="email" class="form-control" id="email" required>
-                                    </div>
-                                    <div class="mb-2">
-                                        <label for="password" class="form-label">Mật khẩu</label>
-                                        <input type="password" class="form-control" id="password" required>
-                                    </div>
-                                    <button type="submit" class="btn btn-primary w-100">Đăng nhập</button>
-                                </form>
+                            <div class="dropdown">
+                                <a class="nav-link dropdown-toggle custom-btn" href="#" id="loginDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <img class="login-icon" src="https://e7.pngegg.com/pngimages/713/762/png-clipart-computer-icons-button-login-image-file-formats-logo-thumbnail.png" alt="Đăng nhập">
+                                </a>
+                                <div class="dropdown-menu dropdown-menu-end p-3" style="min-width: 250px;">
+                                    <form id="login-form">
+                                        <div class="mb-2">
+                                            <label for="email" class="form-label">Email</label>
+                                            <input type="email" class="form-control" id="email" required>
+                                        </div>
+                                        <div class="mb-2">
+                                            <label for="password" class="form-label">Mật khẩu</label>
+                                            <input type="password" class="form-control" id="password" required>
+                                        </div>
+                                        <button type="submit" class="btn btn-primary w-100">Đăng nhập</button>
+                                    </form>
+                                </div>
                             </div>
                         {{/if}}
                     </li>
 
                     {{#if (eq user.role "user")}}
-                        <li class="nav-item active">
-                            <a class="nav-link" href="/order" id="order" aria-haspopup="true" aria-expanded="false">
-                                <img class="order-icon" src="https://cdn.pixabay.com/photo/2014/04/02/10/53/shopping-cart-304843_640.png" alt="giỏ hàng" width="25">
+                        <li class="nav-item">
+                            <a href="/purchase" class="btn custom-btn">Đơn mua</a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="/order" class="btn custom-btn">
+                                <img class="order-icon" src="https://cdn.pixabay.com/photo/2014/04/02/10/53/shopping-cart-304843_640.png" alt="Giỏ hàng">
                             </a>
                         </li>
                     {{/if}}
-
-
-                    
                 </ul>
 
 
