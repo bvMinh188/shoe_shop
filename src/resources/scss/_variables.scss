@@ -1,0 +1,131 @@
+
+.product-image {
+    max-width: 100%; /* Đảm bảo ảnh không vượt quá chiều rộng container */
+    height: auto; /* Giữ nguyên tỷ lệ của ảnh */
+    border: 2px solid #ccc; /* Thêm viền màu xám */
+    padding: 10px; /* Tạo khoảng cách giữa ảnh và viền */
+    border-radius: 5px; /* Bo tròn các góc của viền nếu muốn */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Thêm bóng để tạo hiệu ứng nổi */
+}
+
+.card-product-item {
+    height: 100%; /* Đảm bảo thẻ card chiếm toàn bộ chiều cao */
+}
+
+.card-text {
+    display: -webkit-box;
+    -webkit-line-clamp: 3; /* Hiển thị tối đa 3 dòng */
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    height: 4.5em; /* Chiều cao cố định cho 3 dòng */
+}
+
+.card-body {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between; /* Cân bằng nội dung trong thẻ card */
+    height: 100%;
+}
+.card-product-item {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 100%;
+    text-align: center;
+}
+
+/* Thiết lập kích thước hình ảnh */
+.card-product-item img {
+    max-height: 200px;
+    object-fit: contain; /* Đảm bảo ảnh không bị méo */
+}
+
+/* Căn đều chiều cao của tên sản phẩm */
+.card-title {
+    font-size: 1.2rem;
+    min-height: 50px; /* Điều chỉnh để các tên có cùng chiều cao */
+    line-height: 1.4;
+}
+
+/* Căn đều chiều cao của phần mô tả */
+.card-text {
+    min-height: 60px; /* Điều chỉnh cho mô tả bằng nhau */
+    font-size: 1rem;
+    color: #666;
+}
+
+/* Định dạng nút mua */
+.btn-primary {
+    margin-top: auto;
+}
+
+/* Thêm khoảng cách giữa các sản phẩm */
+.card {
+    width: 100%;
+    background-color: rgb(255, 254, 254);
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+    margin-bottom: 10px;
+}
+.image-container {
+    width: 100%; /* Đặt chiều rộng khung bằng 100% */
+    overflow: hidden; /* Ẩn phần ảnh thừa nếu có */
+    border: 1px solid #ccc; /* Thêm viền nếu cần */
+    border-radius: 5px; /* Bo góc khung ảnh */
+    margin-bottom: 10px; /* Khoảng cách giữa ảnh và input */
+}
+
+.image-container img {
+    width: 100%; /* Đặt chiều rộng của ảnh bằng 100% để nó chiếm toàn bộ khung */
+    height: auto; /* Giữ tỉ lệ ảnh */
+    display: block; /* Đảm bảo không có khoảng trống dưới ảnh */
+}
+
+/* Tùy chỉnh hiển thị form đăng nhập trong dropdown */
+.dropdown-menu {
+    width: 300px;
+    right: 0;
+    left: auto;
+}
+.dropdown-menu form {
+    padding: 15px;
+}
+
+.product-item {
+    margin-bottom: 20px; /* Khoảng cách giữa các sản phẩm */
+}
+.search-bar {
+    width: 500px; /* Kéo rộng input tìm kiếm */
+}
+
+.login-icon {
+    border-radius: 50%; /* Làm tròn viền để cắt phần trắng xung quanh */
+    object-fit: cover;
+    width: 40px; /* Đảm bảo hình ảnh luôn phủ kín vùng ảnh */
+}
+
+.hero-image {
+    width: 100%;
+    height: auto;
+    margin-top: 0px; /* Điều chỉnh khoảng cách từ đầu trang */
+}
+
+.hero-image img {
+    width: 100%;
+    height: auto;
+    object-fit: cover; /* Điều chỉnh kiểu hiển thị ảnh */
+}
+
+.size-btn.active {
+    background-color: black !important;
+    color: white !important;
+}
+.size-btn[disabled] {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+
+
+
+

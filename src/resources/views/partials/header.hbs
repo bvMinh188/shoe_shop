@@ -1,0 +1,140 @@
+
+<!-- Header -->
+<header>
+    <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
+        <div class="container">
+            <a class="navbar-brand ml-auto" href="/admin"> 
+                <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTtrOM7rMVBmTak9RU2seF5q4E84tkr0hajMg&s" alt="Sport Shop Logo">
+            </a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+
+                {{!-- <form class="form-inline my-2 my-lg-0 ml-auto">
+                    <input class="form-control mr-sm-3 search-bar" type="search" placeholder="Tìm kiếm sản phẩm..." aria-label="Search" style="width: 300px;">
+                    <button class="btn btn-search my-2 my-sm-2" type="submit">Tìm kiếm</button>
+                </form> --}}
+
+                <!-- Nút Đăng nhập và Giỏ hàng -->
+                <ul class="navbar-nav ml-auto">
+                    <li class="nav-item dropdown">
+                        {{#if user}}
+                            <!-- Nếu đã đăng nhập, hiển thị nút Đăng xuất -->
+                            <button class="btn btn-danger" id="logout-btn">Đăng xuất</button>
+                        {{else}}
+                            <!-- Nếu chưa đăng nhập, hiển thị dropdown đăng nhập -->
+                            <a class="nav-link dropdown-toggle" href="#" id="loginDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <img class="login-icon" src="https://e7.pngegg.com/pngimages/713/762/png-clipart-computer-icons-button-login-image-file-formats-logo-thumbnail.png" alt="Đăng nhập" width="25">
+                            </a>
+                            <div class="dropdown-menu dropdown-menu-end p-3" style="min-width: 250px;">
+                                <form id="login-form">
+                                    <div class="mb-2">
+                                        <label for="email" class="form-label">Email</label>
+                                        <input type="email" class="form-control" id="email" required>
+                                    </div>
+                                    <div class="mb-2">
+                                        <label for="password" class="form-label">Mật khẩu</label>
+                                        <input type="password" class="form-control" id="password" required>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary w-100">Đăng nhập</button>
+                                </form>
+                            </div>
+                        {{/if}}
+                    </li>
+
+                    {{#if (eq user.role "user")}}
+                        <li class="nav-item active">
+                            <a class="nav-link" href="/order" id="order" aria-haspopup="true" aria-expanded="false">
+                                <img class="order-icon" src="https://cdn.pixabay.com/photo/2014/04/02/10/53/shopping-cart-304843_640.png" alt="giỏ hàng" width="25">
+                            </a>
+                        </li>
+                    {{/if}}
+
+
+                    
+                </ul>
+
+
+            </div>
+        </div>
+    </nav>
+</header>
+
+<!-- Bootstrap JS, Popper.js, and jQuery -->
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const loginForm = document.getElementById("login-form");
+    const logoutBtn = document.getElementById("logout-btn");
+    const loginError = document.getElementById("login-error");
+
+    function setCookie(cname, cvalue, exdays) {
+        const d = new Date();
+        d.setTime(d.getTime() + (exdays*24*60*60*1000));
+        let expires = "expires="+ d.toUTCString();
+        document.cookie = cname + "=" + cvalue + ";" + expires + ";path=/";
+    }
+
+    function getCookie(cname) {
+        let name = cname + "=";
+        let decodedCookie = decodeURIComponent(document.cookie);
+        let ca = decodedCookie.split(';');
+        for(let i = 0; i <ca.length; i++) {
+            let c = ca[i];
+            while (c.charAt(0) == ' ') {
+            c = c.substring(1);
+            }
+            if (c.indexOf(name) == 0) {
+            return c.substring(name.length, c.length);
+            }
+        }
+        return "";
+    }
+    // Xử lý đăng nhập
+    if (loginForm) {
+        $(document).ready(function () {
+        $("#login-form").submit(function(event){
+            event.preventDefault();
+
+            var email = $("#email").val();
+            var password = $("#password").val()
+
+            $.ajax({
+                url: "/logined",
+                method: "POST",
+                data: {
+                    email: $("#email").val(),
+                    password: $("#password").val()
+                },
+                success: function(response){
+                    if(response.message == 'admin'){
+                        setCookie('token', response.token, 1);
+                        window.location.href = "/admin";
+                    }else if(response.message == 'user'){
+                        setCookie('token', response.token, 1);
+                        window.location.href = "/";
+                    }else{
+                        alert(response.message);
+                    }
+                },
+                error: function() {
+                    alert("Đã xảy ra lỗi trong quá trình đăng nhập")
+                }
+            }) 
+        })
+    })
+    }
+
+    // Xử lý đăng xuất
+    if (logoutBtn) {
+        logoutBtn.addEventListener("click", function () {
+            fetch("/logout", { method: "POST" })
+            .then(() => window.location.reload()); // Reload lại trang sau khi đăng xuất
+        });
+    }
+});
+</script>

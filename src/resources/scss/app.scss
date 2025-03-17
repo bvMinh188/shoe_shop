@@ -1,0 +1,46 @@
+@import 'variables';
+
+.card-product-item {
+    margin-top: 10px;
+}
+.navbar {
+    background-color: #1b1b1b; // Màu nền của navbar
+
+    .navbar-brand {
+        img {
+            height: 50px; // Chiều cao logo
+        }
+    }
+
+    .nav-item {
+        .nav-link {
+            color: #fff; // Màu chữ
+
+            &:hover {
+                color: #f0c14b; // Màu chữ khi hover
+            }
+        }
+    }
+
+    .form-inline {
+        .search-bar {
+            width: 50%; // Độ rộng của ô tìm kiếm
+        }
+
+        .btn-search {
+            background-color: #f0c14b; // Màu nút tìm kiếm
+            color: #1b1b1b;
+        }
+    }
+}
+body {
+    padding-top: 70px; /* Điều chỉnh giá trị tùy vào chiều cao của header */
+}
+h5 {
+    color:blue;
+}
+
+form {
+    width: 100%;
+}
+

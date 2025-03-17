@@ -1,0 +1,190 @@
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-5">
+            <h3>Thông tin khách hàng</h3>
+            <form>
+                <div class="form-group">
+                    <label for="customerName">Tên khách hàng</label>
+                    <input type="text" class="form-control" id="customerName" value="{{userInfo.username}}" readonly>
+                </div>
+                <div class="form-group">
+                    <label for="customerEmail">Email</label>
+                    <input type="text" class="form-control" id="customerEmail" value="{{userInfo.email}}" readonly>
+                </div>
+                <div class="form-group">
+                    <label for="customerPhone">Số điện thoại</label>
+                    <input type="text" class="form-control" id="customerPhone" value="{{userInfo.phone}}" readonly>
+                </div>
+            </form>
+        </div>
+
+        <div class="col-md-7">
+            <h3>Thông tin đơn hàng</h3>
+            <table class="table mt-4">
+                <thead>
+                    <tr>
+                        <th scope="col">Tên sản phẩm</th>
+                        <th scope="col"></th>
+                        <th scope="col">Giá</th>
+                        <th scope="col">Size</th>
+                        <th scope="col">Số lượng</th>
+                        <th scope="col">Sửa</th>
+                        <th scope="col">Xóa</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{#each cart}}
+                        <tr>
+                            <td class="name">{{this.name}}</td>
+                            <td><img src="{{this.image}}" width="100px" height="100px"></td>
+                            <td>{{formatPrince this.price}}</td>
+                            <td>{{this.size}}</td>
+                            <td>
+                                <span class="quantity">{{this.quantity}}</span>
+                                <input type="number" class="form-control quantity-input" value="{{this.quantity}}" min="0" style="display: none;" name="quantity">
+                            </td>
+                            <td>
+                                <button type="button" class="btn btn-success edit-btn">Sửa</button>
+                                <button type="button" class="btn btn-success update-btn" data-id="{{this._id}}" data-size="{{this.size}}" style="display: none;">Cập nhật</button>
+                            </td>
+                            <td>
+                                <button type="button" class="btn btn-danger delete-btn" data-id="{{this._id}}" data-size="{{this.size}}">Xóa</button>
+                            </td>
+                        </tr>
+                    {{/each}}
+                </tbody>
+            </table>
+        </div>
+        <form id="orderForm">
+            <div class="row">
+                <!-- Phần địa chỉ -->
+                <div class="col-md-8">
+                    <label for="address">Địa chỉ giao hàng:</label>
+                    <textarea type="text" class="form-control" id="address" name="address" required></textarea>
+                </div>
+
+                <!-- Phần tổng tiền và nút thanh toán -->
+                <div class="col-md-4 d-flex flex-column justify-content-between align-items-end">
+                    <div class="mb-3">
+                        <h5>Tổng tiền: <span id="price">{{formatPrince tong}}</span></h5>
+                    </div>
+                    <button type="submit" class="btn btn-success">Thanh toán khi nhận hàng</button>
+                </div>
+            </div>
+        </form>
+
+
+    </div>
+</div>
+
+
+
+<script>
+$(document).ready(function(){
+    // Sửa
+    $('.edit-btn').click(function(){
+        var row = $(this).closest('tr');
+        row.find('.quantity').hide();
+        row.find('.quantity-input').show();
+        $(this).hide();
+        row.find('.update-btn').show();
+    });
+
+    // Cập nhật
+    $('.update-btn').click(function() {
+        var row = $(this).closest('tr');
+        var productId = $(this).data('id');
+        var size = $(this).data('size');
+        var newQuantity = row.find('.quantity-input').val();
+
+        if (newQuantity && newQuantity.trim() !== '') {
+            if (parseInt(newQuantity) === 0) {
+                deleteProduct(productId, size)
+            } else {
+                $.ajax({
+                    url: `/update-order/${productId}`,
+                    method: 'POST',
+                    data: {
+                        size: size,
+                        quantity: newQuantity
+                    },
+                    success: function(response) {
+                        if (response.message === 'Cập nhật giỏ hàng thành công') {
+                            window.location.reload();
+                        } else {
+                            alert(response.message);
+                        }
+                    },
+                    error: function() {
+                        alert('Đã xảy ra lỗi khi cập nhật số lượng');
+                    }
+                });
+
+                row.find('.quantity-input').hide();
+                row.find('.quantity').text(newQuantity).show();
+                $(this).hide();
+                row.find('.edit-btn').show();
+            }
+        } else {
+            alert('Vui lòng nhập số lượng hợp lệ');
+        }
+    });
+
+    // Nút xóa sản phẩm
+    $('.delete-btn').click(function() {
+        var productId = $(this).data('id');
+        var size = $(this).data('size');
+
+        $.ajax({
+            url: `/delete-order/${productId}`,
+            method: 'DELETE',
+            data: {
+                size: size
+            },
+            success: function(response) {
+                if (response.message === 'Xóa thành công') {
+                    window.location.reload();
+                } else {
+                    alert(response.message);
+                }
+            },
+            error: function(xhr) {
+                alert('Đã xảy ra lỗi khi xóa sản phẩm');
+            }
+        });
+    });
+
+
+    
+    $("#orderForm").submit(function(event){
+        event.preventDefault();
+
+        var address = $("#address").val();
+
+        // Lấy giá trị tổng tiền từ `span` có id="price", loại bỏ các ký tự không phải số
+        var price = $("#price").text();
+
+        $.ajax({
+            url: "/checkout",
+            method: "POST",
+            data: {
+                address: address,
+                price: price
+            },
+            success: function(response){
+                if(response.message == 'success'){
+                    alert("đặt hàng thành công")
+                    window.location.href = "/";
+                }else{
+                    alert(response.message);
+                }
+            },
+            error: function() {
+                alert("Đã xảy ra lỗi trong quá trình đặt hàng")
+            }
+        }) 
+    })
+
+})
+</script>
