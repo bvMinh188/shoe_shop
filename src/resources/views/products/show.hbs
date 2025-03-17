@@ -56,6 +56,12 @@
             const quantity = $("#quantity").val();
             const idProduct = "{{product._id}}";
 
+            // Kiểm tra nếu chưa chọn size
+            if (!size) {
+                alert("Vui lòng chọn size trước khi thêm vào giỏ hàng!");
+                return;
+            }
+
             $.ajax({
                 url: `/order/${idProduct}`,
                 method: "POST",
@@ -63,25 +69,41 @@
                     size: size,
                     quantity: quantity
                 },
-                success: function(response){
-                    if(response.message === 'Thêm thành công' || response.message === 'Cập nhật giỏ hàng thành công'){
+                success: function(response) {
+                    alert(response.message); // Hiển thị thông báo trước khi reload
+                    if (response.message === 'Thêm thành công' || response.message === 'Cập nhật giỏ hàng thành công') {
                         window.location.reload();
-                        alert(response.message);
-                    } else {
-                        alert(response.message);
                     }
                 },
-                error: function() {
-                    alert("Sản phẩm không có đủ số lượng");
+                error: function(xhr) {
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        alert(xhr.responseJSON.message);
+                    } else {
+                        alert("Đã xảy ra lỗi. Vui lòng thử lại sau.");
+                    }
                 }
             });
+        });
+
+        $("#quantity").on("input", function () {
+            const max = $(this).attr("max");
+            let val = parseInt($(this).val());
+
+            if (val > max) {
+                $(this).val(max);
+            } else if (val < 1 || isNaN(val)) {
+                $(this).val(1);
+            }
         });
     });
     function handleSizeClick(size, quantity) {
         document.getElementById("valueSize").innerText = `Còn lại: ${quantity}`;
         document.getElementById("size").value = size; // Lưu size đã chọn
-    }
 
+        const quantityInput = document.getElementById("quantity");
+        quantityInput.max = quantity;
+        quantityInput.value = 1; // Reset về 1 khi chọn size mới
+    }
 
 </script>
 
