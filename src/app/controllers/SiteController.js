@@ -380,8 +380,46 @@ class SiteController {
             res.redirect('/');
         }
     }
+
+    cancelOrder(req, res, next) {
+        const orderId = req.params.id;
     
+        Order.findById(orderId)
+            .then((order) => {
+                if (!order) {
+                    return res.status(404).json({ message: "Đơn hàng không tồn tại" });
+                }
     
+                if (order.status !== "chờ xác nhận") {
+                    return res.status(400).json({ message: "Không thể hủy đơn hàng đã xác nhận hoặc đang giao" });
+                }
+    
+                // Cập nhật trạng thái đơn hàng thành "đã hủy"
+                return Order.findByIdAndUpdate(orderId, { status: "đã hủy" }, { new: true });
+            })
+            .then((updatedOrder) => {
+                if (!updatedOrder) return; // Nếu cập nhật thất bại, thoát ra luôn
+    
+                // Cập nhật lại số lượng tồn kho cho từng sản phẩm trong đơn hàng
+                const updatePromises = updatedOrder.products.map((product) => {
+                    return Product.updateOne(
+                        { name: product.name, "sizes.size": product.size },
+                        { $inc: { "sizes.$.quantity": product.quantity } }
+                    );
+                });
+    
+                return Promise.all(updatePromises);
+            })
+            .then(() => {
+                res.json({ message: "Đơn hàng đã được hủy thành công" });
+            })
+            .catch((error) => {
+                console.error(error);
+                res.status(500).json({ message: "Có lỗi xảy ra khi hủy đơn hàng" });
+            });
+    }
+    
+       
 }
 
 module.exports = new SiteController;

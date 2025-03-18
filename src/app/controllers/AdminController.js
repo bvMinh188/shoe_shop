@@ -6,56 +6,60 @@ const Order = require('../models/Order');
 const { mongooseToObject, mutipleMongooseToObject } = require('../../util/mongoose');
 
 
-class AdminController{
-
-    //[Get] /admin/transaction
-    transaction(req, res, next) {
-        Order.find()
-            .populate("userId", "username phone")
-            .sort({ createdAt: -1 }) // Sắp xếp giảm dần theo createdAt (mới nhất trước)
-            .then(order => {
-                res.render('admin/transaction', { order: mutipleMongooseToObject(order) });
-            })
-            .catch(next);
-    }
+class AdminController {
     
-
-    //[DELETE] /admin/transaction/:id
-    deleteOrder(req, res, next) {
-        Order.findByIdAndUpdate(req.params.id, { status: "đã hủy" })
-            .then((order) => {
-                // Cập nhật lại số lượng tồn kho cho từng sản phẩm trong đơn hàng
-                const updatePromises = order.products.map((product) => {
-                    return Product.updateOne(
-                        { name: product.name, "sizes.size": product.size },
-                        { $inc: { "sizes.$.quantity": product.quantity } }
-                    );
-                });
-                
-                // Chờ tất cả các cập nhật hoàn thành
-                return Promise.all(updatePromises);
-            })
-            .then(() => {
-                res.redirect('back');
-            })
-            .catch(next);
+    async transaction(req, res, next) {
+        try {
+            const orders = await Order.find()
+                .populate("userId", "username phone")
+                .sort({ createdAt: -1 });
+            
+            res.render('admin/transaction', { order: mutipleMongooseToObject(orders) });
+        } catch (error) {
+            next(error);
+        }
     }
 
-    //[patch] /admin/transaction/:id/confirm
-    confirmOrder(req, res, next){
-        Order.findByIdAndUpdate(req.params.id, { status: "đang giao" })
-            .then(() => res.redirect('back'))
-            .catch(next)
-
+    // [DELETE] /admin/transaction/:id
+    async deleteOrder(req, res, next) {
+        try {
+            const order = await Order.findByIdAndUpdate(req.params.id, { status: "đã hủy" }, { new: true });
+            if (!order) return res.json({ message: "error" });
+            
+            const updatePromises = order.products.map(product => {
+                return Product.updateOne(
+                    { name: product.name, "sizes.size": product.size },
+                    { $inc: { "sizes.$.quantity": product.quantity } }
+                );
+            });
+            
+            await Promise.all(updatePromises);
+            res.json({ message: "success" });
+        } catch (error) {
+            res.json({ message: "error" });
+        }
     }
-    completeOrder(req, res, next){
-        Order.findByIdAndUpdate(req.params.id, { status: "đã giao" })
-            .then(() => res.redirect('back'))
-            .catch(next)
 
+    async confirmOrder(req, res, next) {
+        try {
+            const order = await Order.findByIdAndUpdate(req.params.id, { status: "đang giao" }, { new: true });
+            if (!order) return res.json({ message: "error" });
+            res.json({ message: "success" });
+        } catch (error) {
+            res.json({ message: "error" });
+        }
+    }
+
+    async completeOrder(req, res, next) {
+        try {
+            const order = await Order.findByIdAndUpdate(req.params.id, { status: "đã giao" }, { new: true });
+            if (!order) return res.json({ message: "error" });
+            res.json({ message: "success" });
+        } catch (error) {
+            res.json({ message: "error" });
+        }
     }
 }
-   
 
+module.exports = new AdminController();
 
-module.exports = new AdminController;

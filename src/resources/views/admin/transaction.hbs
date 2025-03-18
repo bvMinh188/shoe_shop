@@ -1,3 +1,4 @@
+<div id="order-message" class="alert d-none" role="alert"></div>
 
 <div class="col-md-12">
     <h3>Thông tin đơn hàng</h3>
@@ -17,7 +18,7 @@
         <tbody>
             {{#each order}}
                 <tr>
-                    <td class="name">{{sum @index 1}}</td>
+                    <td>{{sum @index 1}}</td>
                     <td>{{this.userId.username}}</td>
                     <td>{{this.address}}</td>
                     <td>{{this.userId.phone}}</td>
@@ -25,18 +26,18 @@
                     <td>{{formatDate this.createdAt}}</td>
                     <td>{{this.status}}</td>
                     <td>
-                        <a href="#" class="btn btn-primary btn-view-order" data-toggle="modal" 
-                            data-products='{{{json this.products}}}' data-target="#detail-order-modal">
+                        <button class="btn btn-primary btn-view-order" 
+                            data-toggle="modal" 
+                            data-products='{{{json this.products}}}' 
+                            data-target="#detail-order-modal">
                             Xem
-                        </a>
-
-
+                        </button>
                         {{#if (eq this.status "chờ xác nhận")}}
-                            <a href="" class="btn btn-success btn-confirm" data-id="{{this._id}}">Xác nhận</a>
-                            <a href="#" class="btn btn-danger" data-toggle="modal" data-id="{{this._id}}" data-target="#delete-order-modal">Hủy</a>
+                            <button class="btn btn-success btn-confirm" data-id="{{this._id}}">Xác nhận</button>
+                            <button class="btn btn-danger cancel-order" data-id="{{this._id}}">Hủy đơn</button>
                         {{/if}}
                         {{#if (eq this.status "đang giao")}}
-                            <a href="" class="btn btn-success btn-complete"data-id="{{this._id}}">Giao thành công</a>
+                            <button class="btn btn-success btn-complete" data-id="{{this._id}}">Giao thành công</button>
                         {{/if}}
                     </td>
                 </tr>
@@ -44,6 +45,8 @@
         </tbody>
     </table>
 </div>
+
+<div id="order-alert" class="alert d-none" role="alert"></div>
 
 <!-- Modal Xem Đơn Hàng -->
 <div id="detail-order-modal" class="modal fade" tabindex="-1" role="dialog">
@@ -65,16 +68,12 @@
   </div>
 </div>
 
-
-
-
-
-{{!-- Modal Xác Nhận Xóa --}}
-<div id="delete-order-modal" class="modal fade" tabindex="-1" role="dialog">
+<!-- Modal Hủy Đơn -->
+<div id="cancelOrderModal" class="modal fade" tabindex="-1" role="dialog">
   <div class="modal-dialog" role="document">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title">Hủy đơn hàng </h5>
+        <h5 class="modal-title">Xác nhận hủy đơn</h5>
         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
           <span aria-hidden="true">&times;</span>
         </button>
@@ -83,92 +82,114 @@
         <p>Bạn có chắc chắn muốn hủy đơn hàng này không?</p>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-dismiss="modal">Hủy</button>
-        <button id="btn-delete-order" type="button" class="btn btn-danger">có</button>
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Đóng</button>
+        <button id="confirmCancelOrder" type="button" class="btn btn-danger">Xác nhận hủy</button>
       </div>
     </div>
   </div>
 </div>
 
-{{!-- Form Ẩn --}}
-<form name="delete-order-form" method="POST" style="display: none;">
-    <input type="hidden" name="_method" value="DELETE">
-</form>
-{{!-- Form xác nhận --}}
-<form name="confirm-order-form" method="POST"></form>
-{{!-- Form giao thành công --}}
-<form name="complete-order-form" method="POST"></form>
+
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const orderProductsContainer = document.getElementById('order-products');
+document.addEventListener("DOMContentLoaded", function () {
+    const orderMessage = document.getElementById("order-message");
+    let selectedOrderId = null; // Lưu ID đơn hàng cần hủy
 
-    // Khi modal "Xem Đơn Hàng" được kích hoạt
-    $('#detail-order-modal').on('show.bs.modal', function (event) {
-        const button = $(event.relatedTarget);
-        let productsData = button.attr('data-products');
-        // Parse JSON
-        let products;
-        try {
-            products = JSON.parse(productsData);
-        } catch (error) {
-            console.error('Lỗi khi parse JSON:', error);
-            return;
+    function showAlert(message, type = "success") {
+        localStorage.setItem("orderMessage", JSON.stringify({ message, type }));
+        renderAlert();
+    }
+
+    function renderAlert() {
+        const storedMessage = localStorage.getItem("orderMessage");
+        if (storedMessage) {
+            const { message, type } = JSON.parse(storedMessage);
+            orderMessage.textContent = message;
+            orderMessage.className = `alert alert-${type}`;
+            orderMessage.classList.remove("d-none");
+
+            setTimeout(() => {
+                orderMessage.classList.add("d-none");
+                localStorage.removeItem("orderMessage");
+            }, 2000);
         }
-        // Xóa nội dung cũ
-        orderProductsContainer.innerHTML = '';
+    }
 
-        // Hiển thị chi tiết sản phẩm
-        products.forEach(product => {
-            const productHtml = `
-                <div class="col-md-4 mb-3">
-                    <div class="card">
-                        <img src="${product.image}" class="card-img-top" alt="${product.name}" style="height: 150px; object-fit: cover;">
-                        <div class="card-body">
-                            <h5 class="card-title">${product.name}</h5>
-                            <p class="card-text">Size: ${product.size}</p>
-                            <p class="card-text">Số lượng: ${product.quantity}</p>
+    renderAlert();
+
+    document.querySelectorAll(".btn-view-order").forEach(button => {
+        button.addEventListener("click", function () {
+            const products = JSON.parse(this.dataset.products);
+            const orderProducts = document.getElementById("order-products");
+            orderProducts.innerHTML = "";
+            products.forEach(product => {
+                orderProducts.innerHTML += `
+                    <div class="col-md-4">
+                        <img src="${product.image}" class="card-img-top" alt="${product.name}">
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <h5 class="card-title">${product.name}</h5>
+                                <p class="card-text">Size: ${product.size} - Số lượng: ${product.quantity}</p>
+                            </div>
                         </div>
                     </div>
-                </div>`;
-            orderProductsContainer.insertAdjacentHTML('beforeend', productHtml);
+                `;
+            });
         });
     });
 
-    var orderId;
-    var deleteForm = document.forms['delete-order-form'];
-    var btnDeleteOrder = document.getElementById('btn-delete-order');
-    // Khi modal "Xóa Đơn Hàng" được kích hoạt
-    $('#delete-order-modal').on('show.bs.modal', function(event) {
-        var button = $(event.relatedTarget);  // Lấy button đã kích hoạt modal
-        orderId = button.data('id');  // Lấy ID của đơn hàng
-    });
-    // Khi nhấn nút "Xóa" trong modal
-    btnDeleteOrder.onclick = function() {
-        deleteForm.action = '/admin/transaction/' + orderId + '?_method=DELETE';  // Đặt URL action của form
-        deleteForm.submit();  // Gửi form
-    };
-
-    //xác nhận
-    var confirmBtn =$('.btn-confirm');
-    var confirmForm = document.forms['confirm-order-form']
-    confirmBtn.click(function (event){
-        event.preventDefault();
-        var orderId = $(this).data('id');
-        confirmForm.action = '/admin/transaction/' + orderId +'/confirm?_method=PATCH';
-        confirmForm.submit();
+    document.querySelectorAll(".btn-confirm").forEach(button => {
+        button.addEventListener("click", function () {
+            fetch(`/admin/transaction/${this.dataset.id}/confirm`, { method: "PATCH" })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.message === "success") {
+                        showAlert("Đơn hàng đã được xác nhận.");
+                        setTimeout(() => location.reload(), 1000);
+                    }
+                });
+        });
     });
 
-    //giao thành công
-    var completeBtn = $('.btn-complete');
-    var completeForm = document.forms['complete-order-form']
-    completeBtn.click(function(event){
-        event.preventDefault();
-        var orderId =$(this).data('id');
-        console.log(orderId)
-        completeForm.action = '/admin/transaction/' + orderId +'/complete?_method=PATCH';
-        completeForm.submit();
+    document.querySelectorAll(".btn-complete").forEach(button => {
+        button.addEventListener("click", function () {
+            fetch(`/admin/transaction/${this.dataset.id}/complete`, { method: "PATCH" })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.message === "success") {
+                        showAlert("Đơn hàng đã được giao thành công.");
+                        setTimeout(() => location.reload(), 1000);
+                    }
+                });
+        });
+    });
+
+    const cancelOrderModal = new bootstrap.Modal(document.getElementById("cancelOrderModal"));
+
+    // Khi bấm "Hủy đơn", mở modal
+    document.querySelectorAll(".cancel-order").forEach(button => {
+        button.addEventListener("click", function () {
+            selectedOrderId = this.dataset.id;
+            cancelOrderModal.show();
+        });
+    });
+
+    // Khi bấm "Xác nhận hủy", gửi request DELETE
+    document.getElementById("confirmCancelOrder").addEventListener("click", function () {
+        if (selectedOrderId) {
+            fetch(`/admin/transaction/${selectedOrderId}`, { method: "DELETE" })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.message === "success") {
+                        showAlert("Đơn hàng đã bị hủy.", "danger");
+                        setTimeout(() => location.reload(), 1000);
+                    }
+                });
+
+            cancelOrderModal.hide(); // Đóng modal đúng cách
+        }
     });
 });
-
 </script>
+

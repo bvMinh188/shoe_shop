@@ -1,3 +1,4 @@
+<div id="order-message" class="alert d-none" role="alert"></div>
 
 <div class="container">
     <div class="col-md-12">
@@ -27,7 +28,7 @@
                         <strong>Thành tiền:</strong> <span class="text-danger">{{formatPrince this.price}}</span>
                     </div>
                     <div>
-                        <strong>Trạng thái:</strong> <span class=" {{this.status}}">{{this.status}}</span>
+                        <strong>Trạng thái:</strong> <span class="{{this.status}}">{{this.status}}</span>
                     </div>
 
                     {{#if (eq this.status "chờ xác nhận")}}
@@ -35,6 +36,7 @@
                             <button class="btn btn-danger cancel-order" data-id="{{this._id}}">Hủy đơn</button>
                         </div>
                     {{/if}}
+
                 </div>
             {{/each}}
         {{else}}
@@ -43,15 +45,12 @@
     </div>
 </div>
 
-
-
-
-{{!-- Modal Xác Nhận Xóa --}}
-<div id="delete-order-modal" class="modal fade" tabindex="-1" role="dialog">
+<!-- Modal Hủy Đơn -->
+<div id="cancelOrderModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
   <div class="modal-dialog" role="document">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title">Hủy đơn hàng </h5>
+        <h5 class="modal-title">Xác nhận hủy đơn</h5>
         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
           <span aria-hidden="true">&times;</span>
         </button>
@@ -60,36 +59,65 @@
         <p>Bạn có chắc chắn muốn hủy đơn hàng này không?</p>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-dismiss="modal">Hủy</button>
-        <button id="btn-delete-order" type="button" class="btn btn-danger">có</button>
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Đóng</button>
+        <button id="confirmCancelOrder" type="button" class="btn btn-danger">Xác nhận hủy</button>
       </div>
     </div>
   </div>
 </div>
 
-{{!-- Form Ẩn --}}
-<form name="delete-order-form" method="POST" style="display: none;">
-    <input type="hidden" name="_method" value="DELETE">
-</form>
-
-
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        var orderId;
-        var deleteForm = document.forms['delete-order-form'];
-        var btnDeleteOrder = document.getElementById('btn-delete-order'); // Đúng tên biến
+document.addEventListener("DOMContentLoaded", function () {
+    let selectedOrderId = null;
 
-        // Khi modal được kích hoạt
-        $('#delete-order-modal').on('show.bs.modal', function (event) {
-            var button = $(event.relatedTarget);  // Lấy button đã kích hoạt modal
-            orderId = button.data('id');  // Lấy ID của đơn hàng
+    function showAlert(message, type = "success") {
+        const orderMessage = document.getElementById("order-message");
+        orderMessage.textContent = message;
+        orderMessage.className = `alert alert-${type}`;
+        orderMessage.classList.remove("d-none");
+
+        setTimeout(() => {
+            orderMessage.classList.add("d-none");
+        }, 2000);
+    }
+
+    // Khi bấm "Hủy đơn", mở modal
+    document.querySelectorAll(".cancel-order").forEach(button => {
+        button.addEventListener("click", function () {
+            selectedOrderId = this.dataset.id;
+            $("#cancelOrderModal").modal("show");
         });
-
-        // Khi nhấn nút "Xóa" trong modal
-        btnDeleteOrder.onclick = function() { // Sửa tên biến thành btnDeleteOrder
-            deleteForm.action = '/admin/transaction/' + orderId + '?_method=DELETE';  // Đặt URL action của form
-            deleteForm.submit();  // Gửi form
-        };
     });
+
+    // Khi bấm "Xác nhận hủy", gửi request DELETE
+    document.getElementById("confirmCancelOrder").addEventListener("click", function () {
+        if (selectedOrderId) {
+            fetch(`/purchase/transaction/${selectedOrderId}`, { method: "DELETE" })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success || data.message.includes("hủy thành công")) {
+                        showAlert("Đã hủy đơn hàng thành công!", "danger");
+                        setTimeout(() => location.reload(), 1000);
+                    } else {
+                        showAlert("Lỗi: " + data.message, "danger");
+                    }
+                })
+                .catch(error => {
+                    console.error("Lỗi fetch API:", error);
+                    showAlert("Có lỗi xảy ra khi hủy đơn hàng.", "danger");
+                });
+
+            // Đóng modal sau khi nhấn "Xác nhận hủy"
+            $("#cancelOrderModal").modal("hide");
+        }
+    });
+
+    // Đảm bảo modal đóng khi bấm nút "Đóng" hoặc "Thu lại"
+    document.querySelectorAll('[data-dismiss="modal"]').forEach(button => {
+        button.addEventListener("click", function () {
+            $("#cancelOrderModal").modal("hide");
+        });
+    });
+});
 </script>
 

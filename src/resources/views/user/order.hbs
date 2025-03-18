@@ -78,86 +78,97 @@
     </div>
 </div>
 
+<div id="toastContainer" class="toast position-fixed">
+    <div id="toastMessage" class="toast-body text-white"></div>
+</div>
 
 
 <script>
-$(document).ready(function(){
-    // Sửa
-    $('.edit-btn').click(function(){
-        var row = $(this).closest('tr');
-        row.find('.quantity').hide();
-        row.find('.quantity-input').show();
+$(document).ready(function () {
+    function showToast(message, type = "success") {
+        const toast = $("#toastContainer");
+        const toastMessage = $("#toastMessage");
+
+        toastMessage.text(message);
+        toast.css("background", type === "success" ? "rgba(40, 167, 69, 0.9)" : "rgba(220, 53, 69, 0.9)");
+
+        // Hiển thị
+        toast.css({ visibility: "visible", opacity: 1 });
+
+        // Ẩn sau 1.5s
+        setTimeout(() => {
+            toast.css({ visibility: "hidden", opacity: 0 });
+        }, 1500);
+    }
+
+    // Sửa số lượng
+    $(".edit-btn").click(function () {
+        var row = $(this).closest("tr");
+        row.find(".quantity").hide();
+        row.find(".quantity-input").show();
         $(this).hide();
-        row.find('.update-btn').show();
+        row.find(".update-btn").show();
     });
 
-    // Cập nhật
-    $('.update-btn').click(function() {
-        var row = $(this).closest('tr');
-        var productId = $(this).data('id');
-        var size = $(this).data('size');
-        var newQuantity = row.find('.quantity-input').val();
+    // Cập nhật số lượng
+    $(".update-btn").click(function () {
+        var row = $(this).closest("tr");
+        var productId = $(this).data("id");
+        var size = $(this).data("size");
+        var newQuantity = row.find(".quantity-input").val();
 
-        if (newQuantity && newQuantity.trim() !== '') {
+        if (newQuantity && newQuantity.trim() !== "") {
             if (parseInt(newQuantity) === 0) {
-                deleteProduct(productId, size)
+                deleteProduct(productId, size);
             } else {
                 $.ajax({
                     url: `/update-order/${productId}`,
-                    method: 'POST',
-                    data: {
-                        size: size,
-                        quantity: newQuantity
-                    },
-                    success: function(response) {
-                        if (response.message === 'Cập nhật giỏ hàng thành công') {
-                            window.location.reload();
-                        } else {
-                            alert(response.message);
+                    method: "POST",
+                    data: { size: size, quantity: newQuantity },
+                    success: function (response) {
+                        showToast(response.message, "success");
+                        if (response.message === "Cập nhật giỏ hàng thành công") {
+                            setTimeout(() => window.location.reload(), 1500);
                         }
                     },
-                    error: function() {
-                        alert('Đã xảy ra lỗi khi cập nhật số lượng');
+                    error: function () {
+                        showToast("Đã xảy ra lỗi khi cập nhật số lượng", "danger");
                     }
                 });
 
-                row.find('.quantity-input').hide();
-                row.find('.quantity').text(newQuantity).show();
+                row.find(".quantity-input").hide();
+                row.find(".quantity").text(newQuantity).show();
                 $(this).hide();
-                row.find('.edit-btn').show();
+                row.find(".edit-btn").show();
             }
         } else {
-            alert('Vui lòng nhập số lượng hợp lệ');
+            showToast("Vui lòng nhập số lượng hợp lệ", "danger");
         }
     });
 
-    // Nút xóa sản phẩm
-    $('.delete-btn').click(function() {
-        var productId = $(this).data('id');
-        var size = $(this).data('size');
+    // Xóa sản phẩm
+    $(".delete-btn").click(function () {
+        var productId = $(this).data("id");
+        var size = $(this).data("size");
 
         $.ajax({
             url: `/delete-order/${productId}`,
-            method: 'DELETE',
-            data: {
-                size: size
-            },
-            success: function(response) {
-                if (response.message === 'Xóa thành công') {
-                    window.location.reload();
-                } else {
-                    alert(response.message);
+            method: "DELETE",
+            data: { size: size },
+            success: function (response) {
+                showToast(response.message, "success");
+                if (response.message === "Xóa thành công") {
+                    setTimeout(() => window.location.reload(), 1500);
                 }
             },
-            error: function(xhr) {
-                alert('Đã xảy ra lỗi khi xóa sản phẩm');
+            error: function () {
+                showToast("Đã xảy ra lỗi khi xóa sản phẩm", "danger");
             }
         });
     });
 
-
-    
-    $("#orderForm").submit(function(event){
+    // Đặt hàng
+    $("#orderForm").submit(function (event) {
         event.preventDefault();
 
         var address = $("#address").val();
@@ -167,32 +178,31 @@ $(document).ready(function(){
             url: "/checkout",
             method: "POST",
             data: { address: address, price: price },
-            success: function(response) {
-                if (response.message == 'success') {
-                    alert("Đặt hàng thành công");
-                    window.location.href = "/";
+            success: function (response) {
+                if (response.message === "success") {
+                    showToast("Đặt hàng thành công", "success");
+                    setTimeout(() => (window.location.href = "/"), 1500);
                 } else {
                     let errorMsg = "Lỗi đặt hàng:\n";
                     if (response.errors) {
-                        response.errors.forEach(error => {
+                        response.errors.forEach((error) => {
                             errorMsg += `- ${error.name} (Size ${error.size}): ${error.error}\n`;
                         });
                     } else {
                         errorMsg += response.message;
                     }
-                    alert(errorMsg);
+                    showToast(errorMsg, "danger");
                 }
             },
-            error: function(xhr) {
+            error: function (xhr) {
                 if (xhr.responseJSON && xhr.responseJSON.message) {
-                    alert(xhr.responseJSON.message);
+                    showToast(xhr.responseJSON.message, "danger");
                 } else {
-                    alert("Đã xảy ra lỗi trong quá trình đặt hàng");
+                    showToast("Đã xảy ra lỗi trong quá trình đặt hàng", "danger");
                 }
             }
         });
     });
+});
 
-
-})
 </script>

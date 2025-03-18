@@ -154,6 +154,51 @@
     gap: 10px; /* Tạo khoảng cách giữa các nút */
 }
 
+.toast-container {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 9999;
+    background: rgba(0, 0, 0, 0.85);
+    padding: 15px 25px;
+    border-radius: 10px;
+    font-size: 18px;
+    color: white;
+    visibility: hidden; /* Ẩn mặc định nhưng vẫn giữ vị trí */
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+}
+
+
+.toast {
+    font-size: 18px;
+    padding: 15px 20px;
+}
+
+#toastContainer {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1050;
+    background: rgba(0, 0, 0, 0.8); /* Nền tối nhẹ */
+    padding: 15px 25px;
+    border-radius: 10px;
+    font-size: 18px;
+    color: white;
+    visibility: hidden; /* Ẩn mặc định */
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+}
+
+.toast-body {
+    text-align: center;
+    font-size: 16px;
+    padding: 10px 20px;
+}
+
+
 
 
 

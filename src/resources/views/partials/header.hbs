@@ -11,12 +11,6 @@
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
 
-                {{!-- <form class="form-inline my-2 my-lg-0 ml-auto">
-                    <input class="form-control mr-sm-3 search-bar" type="search" placeholder="Tìm kiếm sản phẩm..." aria-label="Search" style="width: 300px;">
-                    <button class="btn btn-search my-2 my-sm-2" type="submit">Tìm kiếm</button>
-                </form> --}}
-
-                <!-- Nút Đăng nhập và Giỏ hàng -->
                 <ul class="navbar-nav ml-auto d-flex align-items-center">
                     <li class="nav-item">
                         {{#if user}}
@@ -29,6 +23,8 @@
                                 </a>
                                 <div class="dropdown-menu dropdown-menu-end p-3" style="min-width: 250px;">
                                     <form id="login-form">
+                                        <div id="login-error" class="alert alert-danger d-none"></div> <!-- Thông báo lỗi -->
+                                        
                                         <div class="mb-2">
                                             <label for="email" class="form-label">Email</label>
                                             <input type="email" class="form-control" id="email" required>
@@ -40,6 +36,7 @@
                                         <button type="submit" class="btn btn-primary w-100">Đăng nhập</button>
                                     </form>
                                 </div>
+
                             </div>
                         {{/if}}
                     </li>
@@ -72,37 +69,20 @@ document.addEventListener("DOMContentLoaded", function () {
     const loginForm = document.getElementById("login-form");
     const logoutBtn = document.getElementById("logout-btn");
     const loginError = document.getElementById("login-error");
+    const loginDropdown = document.getElementById("loginDropdown");
+    const dropdownMenu = document.querySelector(".dropdown-menu");
 
     function setCookie(cname, cvalue, exdays) {
         const d = new Date();
-        d.setTime(d.getTime() + (exdays*24*60*60*1000));
-        let expires = "expires="+ d.toUTCString();
+        d.setTime(d.getTime() + (exdays * 24 * 60 * 60 * 1000));
+        let expires = "expires=" + d.toUTCString();
         document.cookie = cname + "=" + cvalue + ";" + expires + ";path=/";
     }
 
-    function getCookie(cname) {
-        let name = cname + "=";
-        let decodedCookie = decodeURIComponent(document.cookie);
-        let ca = decodedCookie.split(';');
-        for(let i = 0; i <ca.length; i++) {
-            let c = ca[i];
-            while (c.charAt(0) == ' ') {
-            c = c.substring(1);
-            }
-            if (c.indexOf(name) == 0) {
-            return c.substring(name.length, c.length);
-            }
-        }
-        return "";
-    }
-    // Xử lý đăng nhập
     if (loginForm) {
-        $(document).ready(function () {
-        $("#login-form").submit(function(event){
+        loginForm.addEventListener("submit", function (event) {
             event.preventDefault();
-
-            var email = $("#email").val();
-            var password = $("#password").val()
+            event.stopPropagation(); // Ngăn dropdown đóng lại
 
             $.ajax({
                 url: "/logined",
@@ -111,31 +91,53 @@ document.addEventListener("DOMContentLoaded", function () {
                     email: $("#email").val(),
                     password: $("#password").val()
                 },
-                success: function(response){
-                    if(response.message == 'admin'){
+                success: function (response) {
+                    if (response.message === 'admin') {
                         setCookie('token', response.token, 1);
                         window.location.href = "/admin";
-                    }else if(response.message == 'user'){
+                    } else if (response.message === 'user') {
                         setCookie('token', response.token, 1);
                         window.location.href = "/";
-                    }else{
-                        alert(response.message);
+                    } else {
+                        showError(response.message);
                     }
                 },
-                error: function() {
-                    alert("Đã xảy ra lỗi trong quá trình đăng nhập")
+                error: function () {
+                    showError("Đã xảy ra lỗi trong quá trình đăng nhập.");
                 }
-            }) 
-        })
-    })
+            });
+        });
     }
 
-    // Xử lý đăng xuất
+    function showError(message) {
+        if (loginError) {
+            loginError.textContent = message;
+            loginError.classList.remove("d-none");
+
+            // Mở lại dropdown
+            dropdownMenu.classList.add("show");
+            loginDropdown.setAttribute("aria-expanded", "true");
+
+            // Giữ dropdown mở khi có lỗi
+            dropdownMenu.addEventListener("click", function (event) {
+                event.stopPropagation();
+            });
+
+            setTimeout(() => loginError.classList.add("d-none"), 3000);
+        }
+    }
+
+    // Xử lý nút logout
     if (logoutBtn) {
         logoutBtn.addEventListener("click", function () {
             fetch("/logout", { method: "POST" })
-            .then(() => window.location.reload()); // Reload lại trang sau khi đăng xuất
+                .then(() => {
+                    document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+                    window.location.reload();
+                })
+                .catch(error => console.error("Lỗi đăng xuất:", error));
         });
     }
 });
+
 </script>

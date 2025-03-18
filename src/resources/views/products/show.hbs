@@ -1,54 +1,76 @@
-<body>
-    <div class="container mt-5">
-        <div class="row">
-            <div class="col-md-6">
-                <img src="{{product.image}}" alt="{{product.name}}" class="img-fluid" width="400px" height="auto">
-            </div>
-            <div class="col-md-6">
-                <h2>{{product.name}}</h2>
-                <span>Giá: {{formatPrince product.price}}</span>
-                <div class="add-to-cart mt-4">
-                    <form id="addOrder">
-                        <input type="hidden" id="size" name="size">
-                        <div class="size-options">
-                            {{#each product.sizes}}
-                                <button type="button" class="btn btn-outline-dark size-btn" 
-                                    onclick="handleSizeClick({{this.size}}, {{this.quantity}})"
-                                    data-size="{{this.size}}" 
-                                    data-quantity="{{this.quantity}}"
-                                    {{#if (eq this.quantity 0)}}disabled{{/if}}>
-                                    {{this.size}}
-                                </button>
-                            {{/each}}
-                        </div>
+    <body>   
 
-                        <div class="quantity-container mt-3">
-                            <label for="quantity">Số Lượng</label>
-                            <div class="d-flex align-items-center">
-                                <input type="number" id="quantity" name="quantity" value="1" min="1" class="form-control text-center mx-2" style="width: 60px;">
-                                
-                                <span class="ms-2 text-muted available-quantity" id="valueSize"></span>
+        <div class="container mt-5">
+            <div class="row">
+                <div class="col-md-6">
+                    <img src="{{product.image}}" alt="{{product.name}}" class="img-fluid" width="400px" height="auto">
+                </div>
+                <div class="col-md-6">
+                    <h2>{{product.name}}</h2>
+                    <span>Giá: {{formatPrince product.price}}</span>
+                    <div class="add-to-cart mt-4">
+                        <form id="addOrder">
+                            <input type="hidden" id="size" name="size">
+                            <div class="size-options">
+                                {{#each product.sizes}}
+                                    <button type="button" class="btn btn-outline-dark size-btn" 
+                                        onclick="handleSizeClick({{this.size}}, {{this.quantity}})"
+                                        data-size="{{this.size}}" 
+                                        data-quantity="{{this.quantity}}"
+                                        {{#if (eq this.quantity 0)}}disabled{{/if}}>
+                                        {{this.size}}
+                                    </button>
+                                {{/each}}
                             </div>
-                        </div>
 
-                        <button type="submit" class="btn btn-success">Thêm vào giỏ hàng</button>
-                    </form>
+                            <div class="quantity-container mt-3">
+                                <label for="quantity">Số Lượng</label>
+                                <div class="d-flex align-items-center">
+                                    <input type="number" id="quantity" name="quantity" value="1" min="1" class="form-control text-center mx-2" style="width: 60px;">
+                                    
+                                    <span class="ms-2 text-muted available-quantity" id="valueSize"></span>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn btn-success">Thêm vào giỏ hàng</button>
+                        </form>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <div class="product-description mt-4">
-        <h4>MÔ TẢ SẢN PHẨM</h4>
-        <p>{{product.description}}</p>
-    </div>
+        <div class="product-description mt-4">
+            <h4>MÔ TẢ SẢN PHẨM</h4>
+            <p>{{product.description}}</p>
+        </div>
 
-</body>
+        <div id="toastContainer">
+            <div id="toastMessage" class="toast-body text-white"></div>
+        </div>
+
+    </body>
 
 
 
-<script>
-    $(document).ready(function() {
+    <script>
+        $(document).ready(function() {
+            function showToast(message, type = "success") {
+                console.log("showToast called:", message, type); // Kiểm tra hàm có chạy không
+                const toast = $("#toastContainer");
+                const toastMessage = $("#toastMessage");
+
+                toastMessage.text(message);
+                toast.css("background", type === "success" ? "rgba(40, 167, 69, 0.9)" : "rgba(220, 53, 69, 0.9)");
+
+                // Hiển thị
+                toast.css({ visibility: "visible", opacity: 1 });
+
+                // Ẩn sau 0.5s
+                setTimeout(() => {
+                    toast.css({ visibility: "hidden", opacity: 0 });
+                }, 500);
+            }
+
         $("#addOrder").submit(function(event){
             event.preventDefault();
 
@@ -58,28 +80,27 @@
 
             // Kiểm tra nếu chưa chọn size
             if (!size) {
-                alert("Vui lòng chọn size trước khi thêm vào giỏ hàng!");
+                showToast("Vui lòng chọn size trước khi thêm vào giỏ hàng!", "danger");
                 return;
             }
 
             $.ajax({
                 url: `/order/${idProduct}`,
                 method: "POST",
-                data: {
-                    size: size,
-                    quantity: quantity
-                },
+                data: { size: size, quantity: quantity },
                 success: function(response) {
-                    alert(response.message); // Hiển thị thông báo trước khi reload
+                    console.log("Success Response:", response);
+                    showToast(response.message, "success");
                     if (response.message === 'Thêm thành công' || response.message === 'Cập nhật giỏ hàng thành công') {
-                        window.location.reload();
+                        setTimeout(() => window.location.reload(), 1500);
                     }
                 },
                 error: function(xhr) {
+                    console.log("Error Response:", xhr.responseJSON);
                     if (xhr.responseJSON && xhr.responseJSON.message) {
-                        alert(xhr.responseJSON.message);
+                        showToast(xhr.responseJSON.message, "danger");
                     } else {
-                        alert("Đã xảy ra lỗi. Vui lòng thử lại sau.");
+                        showToast("Đã xảy ra lỗi. Vui lòng thử lại sau.", "danger");
                     }
                 }
             });
@@ -96,14 +117,14 @@
             }
         });
     });
+
     function handleSizeClick(size, quantity) {
         document.getElementById("valueSize").innerText = `Còn lại: ${quantity}`;
-        document.getElementById("size").value = size; // Lưu size đã chọn
+        document.getElementById("size").value = size;
 
         const quantityInput = document.getElementById("quantity");
         quantityInput.max = quantity;
-        quantityInput.value = 1; // Reset về 1 khi chọn size mới
+        quantityInput.value = 1;
     }
-
-</script>
+    </script>
 

@@ -71,6 +71,8 @@ router.post('/update-order/:id', checkLogin, siteController.updateOrder)
 router.delete('/delete-order/:id', checkLogin, siteController.deleteOrder)
 router.post('/checkout', checkLogin, siteController.checkout)
 router.get('/purchase', checkLogin, siteController.purchase)
+router.delete('/purchase/transaction/:id',checkLogin,siteController.cancelOrder);
+
 
 // Áp dụng middleware checkLogin cho tất cả route
 

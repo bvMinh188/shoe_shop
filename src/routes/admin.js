@@ -51,11 +51,10 @@ var checkUser = (req, res, next) => {
 };
 
 
-
-router.delete('/admin/transaction/:id', checkLogin, checkUser, adminController.deleteOrder);
-router.patch('/admin/transaction/:id/complete', checkLogin, checkUser, adminController.completeOrder);
-router.patch('/admin/transaction/:id/confirm', checkLogin, checkUser, adminController.confirmOrder);
-router.get('/admin', checkLogin, checkUser, adminController.transaction);
+router.delete("/admin/transaction/:id", checkLogin, checkUser, adminController.deleteOrder);
+router.patch("/admin/transaction/:id/complete", checkLogin, checkUser, adminController.completeOrder);
+router.patch("/admin/transaction/:id/confirm", checkLogin, checkUser, adminController.confirmOrder);
+router.get("/admin", checkLogin, checkUser, adminController.transaction);
 
 
 
